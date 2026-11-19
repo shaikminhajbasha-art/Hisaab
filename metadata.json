@@ -1,0 +1,6 @@
+{
+  "name": "Hisaab — Digital Kirana Ledger",
+  "description": "A simple mobile-first digital udhaar ledger for local Indian shops with balance tracking, WhatsApp reminders, payment screenshots, JSON import, and offline browser storage.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

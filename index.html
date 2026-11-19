@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hisaab — Digital Kirana Ledger</title>
+    <meta
+      name="description"
+      content="A simple mobile-first digital udhaar ledger for local Indian shops with balance tracking, WhatsApp reminders, payment screenshots, JSON import, and offline browser storage."
+    />
+    <meta property="og:title" content="Hisaab — Digital Kirana Ledger" />
+    <meta
+      property="og:description"
+      content="A simple mobile-first digital udhaar ledger for local Indian shops with balance tracking, WhatsApp reminders, payment screenshots, JSON import, and offline browser storage."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('hisaab_theme');
+          var theme = saved === 'dark' || saved === 'light'
+            ? saved
+            : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <!-- Compact Sticky Top Bar -->
+      <header class="top-bar">
+        <div class="top-bar-inner">
+          <div class="brand-group">
+            <button type="button" id="brand-home-btn" class="brand-button" aria-label="Hisaab Home">
+              <span class="brand-mark" aria-hidden="true">₹</span>
+              <span class="brand-name" data-i18n="appName">Hisaab</span>
+            </button>
+          </div>
+
+          <div class="top-bar-meta">
+            <span id="header-shop-name" class="shop-name-text">My Kirana Store</span>
+            <span class="meta-sep" aria-hidden="true">·</span>
+            <span id="header-today-date" class="today-date-text tabular-nums"></span>
+          </div>
+
+          <div class="top-bar-actions">
+            <div class="lang-switcher" role="group" aria-label="Language">
+              <button type="button" class="lang-btn active" data-lang="en">EN</button>
+              <button type="button" class="lang-btn" data-lang="hi">हिन्दी</button>
+              <button type="button" class="lang-btn" data-lang="te">తెలుగు</button>
+            </div>
+            <button
+              type="button"
+              id="theme-toggle-btn"
+              class="theme-toggle-btn"
+              aria-label="Toggle dark mode"
+              title="Toggle light/dark theme"
+            >
+              <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              <svg id="theme-icon-sun" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Workspace -->
+      <main class="main-container">
+        <!-- DASHBOARD VIEW -->
+        <section id="dashboard-view" class="dashboard-grid" aria-label="Shop Dashboard">
+          <!-- Primary Column: Summary + Customers / Overdue -->
+          <div class="primary-column">
+            <!-- Total Outstanding Focal Card -->
+            <div class="summary-card">
+              <div class="mobile-shop-strip">
+                <span id="mobile-shop-name" class="mobile-shop-name">My Kirana Store</span>
+                <span class="mobile-meta-sep" aria-hidden="true">·</span>
+                <span id="mobile-today-date" class="mobile-today-date tabular-nums"></span>
+              </div>
+              <div class="summary-top">
+                <div>
+                  <p class="summary-label" data-i18n="totalOutstanding">Total Outstanding (Baki)</p>
+                  <div id="total-outstanding" class="summary-amount tabular-nums">₹0</div>
+                </div>
+                <div class="summary-right-meta">
+                  <button type="button" id="open-add-customer-btn" class="btn btn-primary">
+                    <span aria-hidden="true">+</span>
+                    <span data-i18n="addCustomer">Add Customer</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="summary-stats-row">
+                <div class="stat-item">
+                  <span class="stat-label" data-i18n="totalCreditGiven">Total Udhaar Given</span>
+                  <span id="summary-total-credit" class="stat-value text-credit tabular-nums">₹0</span>
+                </div>
+                <div class="stat-divider" aria-hidden="true"></div>
+                <div class="stat-item">
+                  <span class="stat-label" data-i18n="totalPaymentReceived">Total Jama Received</span>
+                  <span id="summary-total-payment" class="stat-value text-payment tabular-nums">₹0</span>
+                </div>
+                <div class="stat-divider" aria-hidden="true"></div>
+                <div class="stat-item">
+                  <span class="stat-label" data-i18n="customersWithDue">Pending Customers</span>
+                  <span id="summary-pending-count" class="stat-value tabular-nums">0 / 0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Search & View Switcher -->
+            <div class="controls-bar">
+              <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                  type="search"
+                  id="customer-search"
+                  class="search-input"
+                  placeholder="Search by name or 10-digit phone..."
+                  data-i18n-placeholder="searchPlaceholder"
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="segmented-tabs" role="tablist" aria-label="Customer list view">
+                <button
+                  type="button"
+                  id="tab-all-customers"
+                  class="seg-tab active"
+                  role="tab"
+                  aria-selected="true"
+                  data-i18n="allCustomersTab"
+                >
+                  All Customers
+                </button>
+                <button
+                  type="button"
+                  id="tab-overdue-list"
+                  class="seg-tab"
+                  role="tab"
+                  aria-selected="false"
+                  data-i18n="overdueTab"
+                >
+                  Overdue
+                </button>
+              </div>
+            </div>
+
+            <!-- Customer List Container -->
+            <div id="customers-panel" class="panel-card">
+              <div class="panel-header">
+                <h2 class="panel-title" id="list-heading" data-i18n="customerListTitle">Customer Khata</h2>
+                <span id="list-subtitle" class="panel-subtitle" data-i18n="sortedByHighestDue">Highest balance first</span>
+              </div>
+
+              <div id="customer-list" class="customer-list" aria-live="polite">
+                <!-- Populated dynamically -->
+              </div>
+
+              <div id="empty-customers-state" class="empty-state hidden">
+                <p class="empty-title" data-i18n="noCustomersTitle">No customers yet</p>
+                <p class="empty-desc" data-i18n="noCustomersDesc">
+                  Add your first customer or paste shop JSON in the Import box to get started.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Utility Column: Add Customer, Import JSON, Export CSV, Shop Settings -->
+          <aside class="utility-column" aria-label="Shop Tools">
+            <!-- Add Customer Card -->
+            <div id="add-customer-section" class="tool-card">
+              <div class="tool-header">
+                <h2 class="tool-title" data-i18n="addNewCustomerTitle">Add New Customer</h2>
+              </div>
+              <form id="add-customer-form" class="stack-form" novalidate>
+                <div class="field-group">
+                  <label for="cust-name" class="field-label" data-i18n="customerNameLabel">Customer Name</label>
+                  <input
+                    type="text"
+                    id="cust-name"
+                    class="text-input"
+                    placeholder="e.g. Ravi Kumar"
+                    data-i18n-placeholder="customerNamePlaceholder"
+                    required
+                  />
+                </div>
+                <div class="field-group">
+                  <label for="cust-phone" class="field-label" data-i18n="phoneLabel">10-Digit Mobile Number</label>
+                  <div class="phone-input-wrap">
+                    <span class="phone-prefix">+91</span>
+                    <input
+                      type="tel"
+                      id="cust-phone"
+                      class="text-input phone-input tabular-nums"
+                      inputmode="numeric"
+                      maxlength="10"
+                      placeholder="9876543210"
+                      required
+                    />
+                  </div>
+                </div>
+                <p id="add-customer-error" class="form-error hidden" role="alert"></p>
+                <button type="submit" class="btn btn-primary btn-full" data-i18n="saveCustomerBtn">
+                  Save Customer
+                </button>
+              </form>
+            </div>
+
+            <!-- JSON Import Card (Always visible for automated tester & shop owners) -->
+            <div id="import-section" class="tool-card">
+              <div class="tool-header">
+                <h2 class="tool-title" data-i18n="importJsonTitle">Import Shop JSON</h2>
+                <button type="button" id="load-sample-btn" class="text-link-btn" data-i18n="loadSampleBtn">
+                  Load Sample Shop
+                </button>
+              </div>
+              <p class="tool-hint" data-i18n="importHint">
+                Paste shop JSON below or upload a .json file. Valid import replaces current shop data.
+              </p>
+              <div class="stack-form">
+                <textarea
+                  id="import-box"
+                  class="json-textarea"
+                  rows="5"
+                  placeholder='{"shop": "Lakshmi Provision Store", "customers": [...], "entries": [...]}'
+                  aria-label="Shop JSON data"
+                ></textarea>
+                <p id="import-error" class="form-error hidden" role="alert"></p>
+                <div class="import-actions-row">
+                  <button type="button" id="import-go" class="btn btn-primary flex-1" data-i18n="importBtn">
+                    Import JSON
+                  </button>
+                  <label for="import-file-input" class="btn btn-secondary file-btn">
+                    <span data-i18n="uploadFileBtn">File</span>
+                    <input type="file" id="import-file-input" accept=".json,application/json" class="sr-only" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Export & Shop Settings Card -->
+            <div id="settings-section" class="tool-card">
+              <div class="tool-header">
+                <h2 class="tool-title" data-i18n="shopSettingsTitle">Shop & Export</h2>
+              </div>
+              <form id="shop-settings-form" class="stack-form" novalidate>
+                <div class="field-group">
+                  <label for="shop-name-input" class="field-label" data-i18n="shopNameLabel">Shop Name</label>
+                  <input
+                    type="text"
+                    id="shop-name-input"
+                    class="text-input"
+                    placeholder="My Kirana Store"
+                  />
+                </div>
+                <div class="field-group">
+                  <label for="shop-upi-input" class="field-label" data-i18n="upiIdLabel">Shop UPI ID (Optional)</label>
+                  <input
+                    type="text"
+                    id="shop-upi-input"
+                    class="text-input"
+                    placeholder="e.g. lakshmistore@upi"
+                    autocomplete="off"
+                  />
+                  <span class="field-help" data-i18n="upiHelp">
+                    Adds a one-tap UPI pay link to WhatsApp reminders.
+                  </span>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-full" data-i18n="saveSettingsBtn">
+                  Save Shop Details
+                </button>
+              </form>
+
+              <div class="settings-divider"></div>
+
+              <div class="data-actions-grid">
+                <button type="button" id="export-csv-btn" class="btn btn-secondary btn-full" data-i18n="exportCsvBtn">
+                  Download CSV
+                </button>
+                <button type="button" id="clear-data-btn" class="btn btn-danger-outline btn-full" data-i18n="clearShopBtn">
+                  Clear Shop Data
+                </button>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <!-- CUSTOMER LEDGER VIEW -->
+        <section id="ledger-view" class="ledger-layout hidden" aria-label="Customer Ledger">
+          <div class="ledger-top-nav">
+            <button type="button" id="back-to-dashboard-btn" class="back-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              <span data-i18n="backToDashboard">All Customers</span>
+            </button>
+
+            <div id="ledger-quick-actions" class="ledger-quick-actions">
+              <!-- WhatsApp / UPI links injected here when balance > 0 -->
+            </div>
+          </div>
+
+          <div class="ledger-grid">
+            <!-- Left: Customer Summary + Transaction History -->
+            <div class="ledger-main-col">
+              <div class="ledger-header-card">
+                <div class="ledger-customer-info">
+                  <h1 id="ledger-customer-name" class="ledger-name"></h1>
+                  <p id="ledger-customer-phone" class="ledger-phone tabular-nums"></p>
+                </div>
+
+                <div class="ledger-balance-block">
+                  <span class="ledger-balance-label" data-i18n="currentBalance">Current Balance</span>
+                  <span id="ledger-current-balance" class="ledger-balance-value tabular-nums">₹0</span>
+                </div>
+
+                <div class="summary-stats-row ledger-stats">
+                  <div class="stat-item">
+                    <span class="stat-label" data-i18n="totalCredit">Total Udhaar (Credit)</span>
+                    <span id="ledger-total-credit" class="stat-value text-credit tabular-nums">₹0</span>
+                  </div>
+                  <div class="stat-divider" aria-hidden="true"></div>
+                  <div class="stat-item">
+                    <span class="stat-label" data-i18n="totalPayment">Total Jama (Paid)</span>
+                    <span id="ledger-total-payment" class="stat-value text-payment tabular-nums">₹0</span>
+                  </div>
+                  <div class="stat-divider" aria-hidden="true"></div>
+                  <div class="stat-item">
+                    <span class="stat-label" data-i18n="entriesCount">Entries</span>
+                    <span id="ledger-entries-count" class="stat-value tabular-nums">0</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction History -->
+              <div class="panel-card">
+                <div class="panel-header">
+                  <h2 class="panel-title" data-i18n="transactionHistory">Transaction History</h2>
+                  <span class="panel-subtitle" data-i18n="newestFirst">Newest first</span>
+                </div>
+                <div id="ledger-entries-list" class="entries-list">
+                  <!-- Entries rendered dynamically -->
+                </div>
+                <div id="empty-entries-state" class="empty-state hidden">
+                  <p class="empty-title" data-i18n="noEntriesTitle">No entries yet</p>
+                  <p class="empty-desc" data-i18n="noEntriesDesc">
+                    Record udhaar (credit given) or jama (payment received) using the form.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Add / Edit Entry Form -->
+            <div class="ledger-form-col">
+              <div class="tool-card sticky-desktop-card">
+                <div class="tool-header">
+                  <h2 id="entry-form-title" class="tool-title" data-i18n="addEntryTitle">Add Entry</h2>
+                  <button type="button" id="cancel-edit-btn" class="text-link-btn hidden" data-i18n="cancelEdit">
+                    Cancel Edit
+                  </button>
+                </div>
+
+                <form id="entry-form" class="stack-form" novalidate>
+                  <input type="hidden" id="editing-entry-id" value="" />
+
+                  <!-- Entry Type Segmented Toggle -->
+                  <div class="field-group">
+                    <span class="field-label" data-i18n="entryTypeLabel">Entry Type</span>
+                    <div class="type-toggle" role="radiogroup" aria-label="Transaction type">
+                      <label class="type-option type-credit">
+                        <input type="radio" name="entry-type" value="credit" checked />
+                        <span data-i18n="creditGiven">Udhaar (Credit)</span>
+                      </label>
+                      <label class="type-option type-payment">
+                        <input type="radio" name="entry-type" value="payment" />
+                        <span data-i18n="paymentReceived">Jama (Payment)</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="field-group">
+                    <label for="entry-amount" class="field-label" data-i18n="amountLabel">Amount (₹)</label>
+                    <input
+                      type="number"
+                      id="entry-amount"
+                      class="text-input amount-input tabular-nums"
+                      step="0.01"
+                      min="0.01"
+                      inputmode="decimal"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+
+                  <div class="field-group">
+                    <label for="entry-date" class="field-label" data-i18n="dateLabel">Date</label>
+                    <input type="date" id="entry-date" class="text-input tabular-nums" required />
+                  </div>
+
+                  <div class="field-group">
+                    <label for="entry-note" class="field-label" data-i18n="noteLabel">Short Note (Optional)</label>
+                    <input
+                      type="text"
+                      id="entry-note"
+                      class="text-input"
+                      maxlength="120"
+                      placeholder="e.g. groceries, rice & dal, paid on UPI"
+                      data-i18n-placeholder="notePlaceholder"
+                    />
+                  </div>
+
+                  <!-- Payment Screenshot Field (Only shown for Payment entries) -->
+                  <div id="screenshot-field-group" class="field-group hidden">
+                    <label for="shot-input" class="field-label" data-i18n="screenshotLabel">
+                      Payment Screenshot (Optional)
+                    </label>
+                    <input
+                      type="file"
+                      id="shot-input"
+                      class="file-input"
+                      accept="image/*"
+                    />
+                    <div id="shot-preview-wrap" class="shot-preview-wrap hidden">
+                      <img id="shot-preview-img" class="shot-preview-img" alt="Selected payment screenshot preview" />
+                      <div class="shot-preview-actions">
+                        <button type="button" id="ocr-read-btn" class="btn btn-secondary btn-sm" data-i18n="readAmountBtn">
+                          Read Amount (OCR)
+                        </button>
+                        <button type="button" id="remove-shot-btn" class="text-link-btn danger-link" data-i18n="removePhoto">
+                          Remove photo
+                        </button>
+                      </div>
+                    </div>
+                    <div id="ocr-suggestion-box" class="ocr-suggestion-box hidden" aria-live="polite">
+                      <span id="ocr-status-text" class="ocr-status-text"></span>
+                      <button type="button" id="ocr-apply-btn" class="btn btn-primary btn-sm hidden"></button>
+                    </div>
+                  </div>
+
+                  <p id="entry-form-error" class="form-error hidden" role="alert"></p>
+
+                  <button type="submit" id="save-entry-btn" class="btn btn-primary btn-full" data-i18n="saveEntryBtn">
+                    Save Entry
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Mobile Bottom Navigation Bar (Compact <= 60px) -->
+      <nav class="mobile-bottom-nav" aria-label="Quick navigation">
+        <button type="button" class="bottom-nav-item active" data-nav="customers">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span data-i18n="navCustomers">Khata</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-nav="overdue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span data-i18n="navOverdue">Overdue</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-nav="add">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span data-i18n="navAdd">Add</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-nav="tools">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <span data-i18n="navTools">Import/CSV</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Confirmation Dialog (replaces window.confirm) -->
+    <div id="confirm-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="modal-card">
+        <h3 id="confirm-title" class="modal-title">Confirm Action</h3>
+        <p id="confirm-message" class="modal-message"></p>
+        <div class="modal-actions">
+          <button type="button" id="confirm-cancel-btn" class="btn btn-secondary" data-i18n="cancel">Cancel</button>
+          <button type="button" id="confirm-ok-btn" class="btn btn-danger" data-i18n="confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screenshot Lightbox Modal -->
+    <div id="image-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Payment Screenshot">
+      <div class="image-modal-card">
+        <div class="image-modal-header">
+          <span id="image-modal-caption" class="image-modal-caption">Payment Screenshot</span>
+          <button type="button" id="close-image-modal-btn" class="btn btn-secondary btn-sm" data-i18n="close">Close</button>
+        </div>
+        <img id="image-modal-img" class="image-modal-img" alt="Full payment screenshot" />
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script type="module" src="./script.js"></script>
+  </body>
+</html>
